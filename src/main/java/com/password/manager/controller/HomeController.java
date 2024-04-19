@@ -40,4 +40,12 @@ public class HomeController {
         return new ResponseEntity<>(homeManager.saveUserData(userCredsRequest), HttpStatus.OK);
     }
 
+    @PostMapping("/update-data")
+    public ResponseEntity<BaseResponse> updateUserData(@RequestBody @NotNull UserCredsRequest userCredsRequest) {
+
+        logger.debug("update-data endpoint started.");
+
+        return new ResponseEntity<>(homeManager.updateUserData(userCredsRequest), HttpStatus.OK);
+    }
+
 }

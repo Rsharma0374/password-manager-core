@@ -18,6 +18,9 @@ public class UserCredsRequest {
     @JsonProperty("sLoginUser")
     private String loginUser;
 
+    @JsonProperty("sPlatformName")
+    private String platformName;
+
     public String getUsername() {
         return username;
     }
@@ -48,5 +51,13 @@ public class UserCredsRequest {
 
     public void setLoginUser(String loginUser) {
         this.loginUser = loginUser;
+    }
+
+    public String getPlatformName() {
+        return platformName;
+    }
+
+    public void setPlatformName(String platformName) {
+        this.platformName = platformName;
     }
 }

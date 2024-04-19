@@ -1,13 +1,15 @@
 package com.password.manager.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
 import java.util.List;
 
-@Document (collection = "CredsCollection")
+@Document (collection = "credentialCollection")
+@ToString
 public class UserCredsCollection {
 
     @Id
@@ -44,6 +46,7 @@ public class UserCredsCollection {
         this.lastUpdatedDate = lastUpdatedDate;
     }
 
+    @ToString
     public static class CredList {
 
         @JsonProperty("sUserName")
@@ -54,6 +57,9 @@ public class UserCredsCollection {
 
         @JsonProperty("sPassword")
         private String password;
+
+        @JsonProperty("sPlatformName")
+        private String platformName;
 
         public String getUsername() {
             return username;
@@ -77,6 +83,14 @@ public class UserCredsCollection {
 
         public void setPassword(String password) {
             this.password = password;
+        }
+
+        public String getPlatformName() {
+            return platformName;
+        }
+
+        public void setPlatformName(String platformName) {
+            this.platformName = platformName;
         }
     }
 }

@@ -5,4 +5,6 @@ import com.password.manager.response.BaseResponse;
 
 public interface HomeManager {
     BaseResponse saveUserData(UserCredsRequest userCredsRequest);
+
+    BaseResponse updateUserData(UserCredsRequest userCredsRequest);
 }
