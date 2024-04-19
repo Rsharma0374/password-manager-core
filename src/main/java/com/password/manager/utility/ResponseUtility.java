@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.password.manager.response.BaseResponse;
+import com.password.manager.response.Error;
 import com.password.manager.response.Payload;
 import com.password.manager.response.Status;
 import org.slf4j.Logger;
@@ -15,6 +16,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Random;
 
@@ -24,6 +27,8 @@ public class ResponseUtility {
     private static final Logger logger = LoggerFactory.getLogger(ResponseUtility.class);
 
     private static ObjectMapper mapper = new ObjectMapper().registerModule(new JodaModule());
+
+    public static final String NO_DATA_FOUND = "No data found against provided request.";
 
     public static BaseResponse getBaseResponse(HttpStatus httpStatus, Object buzResponse) {
         logger.info("Inside getBaseResponse method");
@@ -38,6 +43,47 @@ public class ResponseUtility {
                                 .statusCode(httpStatus.value())
                                 .statusValue(httpStatus.name()).build())
                 .build();
+    }
+
+    public static BaseResponse getBaseResponse(HttpStatus httpStatus, Collection<Error> errors) {
+        return BaseResponse.builder()
+                .status(
+                        Status.builder()
+                                .statusCode(httpStatus.value())
+                                .statusValue(httpStatus.name()).build())
+                .errors(errors)
+                .build();
+    }
+
+    public static Collection<Error> getNoContentErrorList() {
+        Collection<Error> errors = new ArrayList<>();
+        errors.add(Error.builder()
+                .message(NO_DATA_FOUND)
+                .errorCode(String.valueOf(Error.ERROR_TYPE.DATABASE.toCode()))
+                .errorType(Error.ERROR_TYPE.DATABASE.toValue())
+                .level(Error.SEVERITY.LOW.name())
+                .build());
+        return errors;
+    }
+
+    public static Collection<Error> getBadRequestErrorList(String errorMsg){
+        Collection<Error> errors = new ArrayList<>();
+        errors.add(Error.builder()
+                .errorType(Error.ERROR_TYPE.BAD_REQUEST.toValue())
+                .errorCode(String.valueOf(Error.ERROR_TYPE.BAD_REQUEST.toCode()))
+                .message(errorMsg)
+                .build());
+        return errors;
+    }
+
+    public static Collection<Error> getInterServerErrorList(String errorMsg){
+        Collection<Error> errors = new ArrayList<>();
+        errors.add(Error.builder()
+                .errorType(Error.ERROR_TYPE.SYSTEM.toValue())
+                .errorCode(String.valueOf(Error.ERROR_TYPE.SYSTEM.toCode()))
+                .message(errorMsg)
+                .build());
+        return errors;
     }
 
     public static String encryptThisString(String input) {

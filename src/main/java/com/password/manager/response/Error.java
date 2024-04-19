@@ -193,7 +193,6 @@ public class Error {
         SYSTEM("SYSTEM", 1000),
         BUSINESS("BUSINESS", 2000),
         DATABASE("DATABASE", 3000),
-        ASSET_COST_ERROR("ASSET_COST_ERROR", 4000),
         BAD_REQUEST("BAD_REQUEST" , 400);
 
         private int code;

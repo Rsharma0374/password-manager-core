@@ -7,4 +7,8 @@ public interface HomeManager {
     BaseResponse saveUserData(UserCredsRequest userCredsRequest);
 
     BaseResponse updateUserData(UserCredsRequest userCredsRequest);
+
+    BaseResponse deleteUserData(UserCredsRequest userCredsRequest);
+
+    BaseResponse getUserData(UserCredsRequest userCredsRequest);
 }

@@ -32,6 +32,14 @@ public class HomeController {
                 "+-------------------------------------+\n";
     }
 
+    @PostMapping("/get-data")
+    public ResponseEntity<BaseResponse> getUserData(@RequestBody @NotNull UserCredsRequest userCredsRequest) {
+
+        logger.debug("get-data endpoint started.");
+
+        return new ResponseEntity<>(homeManager.getUserData(userCredsRequest), HttpStatus.OK);
+    }
+
     @PostMapping("/save-data")
     public ResponseEntity<BaseResponse> saveUserData(@RequestBody @NotNull UserCredsRequest userCredsRequest) {
 
@@ -48,4 +56,11 @@ public class HomeController {
         return new ResponseEntity<>(homeManager.updateUserData(userCredsRequest), HttpStatus.OK);
     }
 
+    @PostMapping("/delete-data")
+    public ResponseEntity<BaseResponse> deleteUserData(@RequestBody @NotNull UserCredsRequest userCredsRequest) {
+
+        logger.debug("delete-data endpoint started.");
+
+        return new ResponseEntity<>(homeManager.deleteUserData(userCredsRequest), HttpStatus.OK);
+    }
 }
