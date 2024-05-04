@@ -2,15 +2,21 @@ package com.password.manager.service.impl;
 
 import com.password.manager.dao.MongoService;
 import com.password.manager.model.UserCredsCollection;
+import com.password.manager.request.LoginRequest;
+import com.password.manager.request.UserCreation;
 import com.password.manager.request.UserCredsRequest;
 import com.password.manager.response.BaseResponse;
 import com.password.manager.response.Error;
+import com.password.manager.response.LoginResponse;
 import com.password.manager.service.HomeManager;
-import com.password.manager.utility.ResponseUtility;
+import com.password.manager.service.transport.TransportUtils;
+import com.password.manager.utility.Utility;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -25,13 +31,49 @@ public class HomeManagerImpl implements HomeManager {
     @Autowired
     MongoService mongoService;
 
+    @Value("${userAuthentication.login.api}")
+    private String loginApi;
+
+    /**
+     * The `login` function in Java handles user authentication by checking the password with SHA encryption and generating
+     * an OTP for verification.
+     *
+     * @param loginRequest The `loginRequest` parameter in the `login` method contains information required for user
+     * authentication, such as the username, password, and SHA-encrypted password. It is used to validate the user's
+     * credentials during the login process. The method checks if the provided username exists in the system and then
+     * compares
+     * @param httpRequest The `httpRequest` parameter in the `login` method is of type `HttpServletRequest`. This parameter
+     * is used to access information about the HTTP request that triggered the login operation. It can provide details such
+     * as request headers, parameters, and other information related to the incoming HTTP request. This information can be
+     * @return The method `login` returns a `BaseResponse` object.
+     */
+    @Override
+    public BaseResponse login(LoginRequest loginRequest, HttpServletRequest httpRequest) {
+        logger.info("Inside login request");
+        LoginResponse loginResponse = new LoginResponse();
+        try {
+
+            loginResponse = (LoginResponse) TransportUtils.postJsonRequest(loginRequest, loginApi, LoginResponse.class);
+            if (null != loginResponse) {
+                return Utility.getBaseResponse(HttpStatus.OK, loginResponse);
+            }
+
+            return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, "Something went wrong. Please contact system administrator");
+        } catch (Exception ex) {
+            Error error = new Error();
+            error.setMessage(ex.getMessage());
+            logger.error("Exception occurred while login due to - ", ex);
+            return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
+        }
+    }
+
     @Override
     public BaseResponse saveUserData(UserCredsRequest userCredsRequest) {
 
         boolean dataSaved = false;
         try {
             if (null == userCredsRequest || StringUtils.isEmpty(userCredsRequest.getPassword()) || StringUtils.isEmpty(userCredsRequest.getLoginUser())) {
-                return ResponseUtility.getBaseResponse(HttpStatus.BAD_REQUEST, ResponseUtility.getBadRequestErrorList("Request is invalid."));
+                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
 
             }
             UserCredsCollection userCredsCollection = mongoService.getUserData(userCredsRequest);
@@ -57,7 +99,7 @@ public class HomeManagerImpl implements HomeManager {
                             Error error = new Error();
                             error.setErrorCode(String.valueOf(HttpStatus.BAD_REQUEST.value()));
                             error.setMessage("Request is invalid.");
-                            return ResponseUtility.getBaseResponse(HttpStatus.BAD_REQUEST, error);
+                            return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, error);
                         }
                     }
                     UserCredsCollection.CredList credList = new UserCredsCollection.CredList();
@@ -93,9 +135,9 @@ public class HomeManagerImpl implements HomeManager {
             }
 
             if (dataSaved) {
-                return ResponseUtility.getBaseResponse(HttpStatus.OK, userCredsCollection);
+                return Utility.getBaseResponse(HttpStatus.OK, userCredsCollection);
             } else {
-                return ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, ResponseUtility.getInterServerErrorList("Something went wrong, Please contact Administrator."));
+                return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Utility.getInterServerErrorList("Something went wrong, Please contact Administrator."));
 
             }
 
@@ -103,7 +145,7 @@ public class HomeManagerImpl implements HomeManager {
             logger.error("Exception occurred while saving user creds with probable cause - ", e);
             Error error = new Error();
             error.setMessage(e.getMessage());
-            return ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
+            return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
         }
     }
 
@@ -113,16 +155,16 @@ public class HomeManagerImpl implements HomeManager {
             if (null == userCredsRequest || StringUtils.isEmpty(userCredsRequest.getPassword())
                     || StringUtils.isEmpty(userCredsRequest.getLoginUser())
                     || StringUtils.isEmpty(userCredsRequest.getPlatformName())) {
-                return ResponseUtility.getBaseResponse(HttpStatus.BAD_REQUEST, ResponseUtility.getBadRequestErrorList("Request is invalid."));
+                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
             }
             UserCredsCollection userCredsCollection = mongoService.getUserData(userCredsRequest);
             if (null == userCredsCollection) {
-                return ResponseUtility.getBaseResponse(HttpStatus.NO_CONTENT, ResponseUtility.getNoContentErrorList());
+                return Utility.getBaseResponse(HttpStatus.NO_CONTENT, Utility.getNoContentErrorList());
 
             }
             List<UserCredsCollection.CredList> credList = userCredsCollection.getCredLists();
             if (CollectionUtils.isEmpty(credList)) {
-                return ResponseUtility.getBaseResponse(HttpStatus.BAD_REQUEST, ResponseUtility.getBadRequestErrorList("Request is invalid."));
+                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
             }
             List<UserCredsCollection.CredList> filteredCredList = credList.stream()
                     .filter(f-> Objects.equals(f.getPlatformName(), userCredsRequest.getPlatformName()))
@@ -140,9 +182,9 @@ public class HomeManagerImpl implements HomeManager {
             }
 
             if (mongoService.saveCredsCollection(userCredsCollection)) {
-                return ResponseUtility.getBaseResponse(HttpStatus.OK, userCredsCollection);
+                return Utility.getBaseResponse(HttpStatus.OK, userCredsCollection);
             } else {
-                return ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, ResponseUtility.getInterServerErrorList("Something went wrong, Please contact Administrator."));
+                return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Utility.getInterServerErrorList("Something went wrong, Please contact Administrator."));
 
             }
 
@@ -151,7 +193,7 @@ public class HomeManagerImpl implements HomeManager {
             logger.error("Exception occurred while updating user creds with probable cause - ", e);
             Error error = new Error();
             error.setMessage(e.getMessage());
-            return ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
+            return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
         }
     }
 
@@ -160,17 +202,17 @@ public class HomeManagerImpl implements HomeManager {
 
         try {
             if (null == userCredsRequest || StringUtils.isEmpty(userCredsRequest.getLoginUser()) || StringUtils.isEmpty(userCredsRequest.getPlatformName())) {
-                return ResponseUtility.getBaseResponse(HttpStatus.BAD_REQUEST, ResponseUtility.getBadRequestErrorList("Request is invalid."));
+                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
             }
             UserCredsCollection userCredsCollection = mongoService.getUserData(userCredsRequest);
             if (null == userCredsCollection) {
-                return ResponseUtility.getBaseResponse(HttpStatus.NO_CONTENT, ResponseUtility.getNoContentErrorList());
+                return Utility.getBaseResponse(HttpStatus.NO_CONTENT, Utility.getNoContentErrorList());
 
             }
 
             List<UserCredsCollection.CredList> credList = userCredsCollection.getCredLists();
             if (CollectionUtils.isEmpty(credList)) {
-                return ResponseUtility.getBaseResponse(HttpStatus.BAD_REQUEST, ResponseUtility.getBadRequestErrorList("Request is invalid."));
+                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
             }
             boolean removed = credList.removeIf(f -> (null != f.getPlatformName()
                     && StringUtils.equalsIgnoreCase(f.getPlatformName(), userCredsRequest.getPlatformName())
@@ -178,16 +220,16 @@ public class HomeManagerImpl implements HomeManager {
             logger.debug("Removed success");
 
             if (mongoService.saveCredsCollection(userCredsCollection)) {
-                return ResponseUtility.getBaseResponse(HttpStatus.OK, userCredsCollection);
+                return Utility.getBaseResponse(HttpStatus.OK, userCredsCollection);
             } else {
-                return ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, ResponseUtility.getInterServerErrorList("Something went wrong, Please contact Administrator."));
+                return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Utility.getInterServerErrorList("Something went wrong, Please contact Administrator."));
             }
 
         } catch (Exception e) {
             logger.error("Exception occurred while deleteUserData with probable cause - ", e);
             Error error = new Error();
             error.setMessage(e.getMessage());
-            return ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
+            return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
         }
     }
 
@@ -195,20 +237,20 @@ public class HomeManagerImpl implements HomeManager {
     public BaseResponse getUserData(UserCredsRequest userCredsRequest) {
         try {
             if (null == userCredsRequest || StringUtils.isEmpty(userCredsRequest.getLoginUser())) {
-                return ResponseUtility.getBaseResponse(HttpStatus.BAD_REQUEST, ResponseUtility.getBadRequestErrorList("Request is invalid."));
+                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
             }
             UserCredsCollection userCredsCollection = mongoService.getUserData(userCredsRequest);
             if (null == userCredsCollection) {
-                return ResponseUtility.getBaseResponse(HttpStatus.NO_CONTENT, ResponseUtility.getNoContentErrorList());
+                return Utility.getBaseResponse(HttpStatus.NO_CONTENT, Utility.getNoContentErrorList());
             }
 
-            return ResponseUtility.getBaseResponse(HttpStatus.OK, userCredsCollection);
+            return Utility.getBaseResponse(HttpStatus.OK, userCredsCollection);
 
         } catch (Exception e) {
             logger.error("Exception occurred while getUserData with probable cause - ", e);
             Error error = new Error();
             error.setMessage(e.getMessage());
-            return ResponseUtility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
+            return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
         }
     }
 }

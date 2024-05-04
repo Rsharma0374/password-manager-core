@@ -1,8 +1,10 @@
 package com.password.manager.dao.impl;
 
 import com.mongodb.BasicDBObject;
+import com.password.manager.configuration.ActionConfiguration;
 import com.password.manager.dao.MongoService;
 import com.password.manager.model.UserCredsCollection;
+import com.password.manager.model.master.ApiRoleAuthorisationMaster;
 import com.password.manager.request.UserCredsRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,6 +68,38 @@ public class MongoServiceImpl implements MongoService {
         } catch (Exception e) {
             logger.error("Exception occurred in method save creds collection for user {} with probable cause - ", userCredsCollection.getLoginUsername(), e);
             return false;
+        }
+    }
+
+    @Override
+    public ActionConfiguration getActionConfigByProductAndActionName(String product, String apiSkipAuthentication) {
+        try {
+            Query query = new Query();
+            query.addCriteria(Criteria.where("productName").is(product)
+                    .and("actionName").is(apiSkipAuthentication)
+                    .and("enable").is(true));
+
+            return mongoTemplate.findOne(query, ActionConfiguration.class);
+        } catch (Exception e) {
+            logger.error("Exception occurred while fetching action config with probable cause - ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public ApiRoleAuthorisationMaster getApiAuthMasterByApiName(String product, String apiName, String httpMethod) {
+        try {
+            Query query = new Query();
+            query.addCriteria(Criteria.where("product").is(product)
+                    .and("apiName").is(apiName)
+                    .and("methodType").is(httpMethod)
+                    .and("active").is(true));
+
+            return mongoTemplate.findOne(query, ApiRoleAuthorisationMaster.class);
+
+        } catch (Exception e) {
+            logger.error("Exception occurred while fetching authentication master for api {}, product {} and method {} with probable cause - ",apiName, product, httpMethod, e);
+            return null;
         }
     }
 }

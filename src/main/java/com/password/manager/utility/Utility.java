@@ -4,27 +4,29 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
+import com.password.manager.constant.FieldSeparator;
 import com.password.manager.response.BaseResponse;
 import com.password.manager.response.Error;
 import com.password.manager.response.Payload;
 import com.password.manager.response.Status;
+import jakarta.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.servlet.HandlerMapping;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Random;
+import java.util.*;
 
-public class ResponseUtility {
+public class Utility {
 
 
-    private static final Logger logger = LoggerFactory.getLogger(ResponseUtility.class);
+    private static final Logger logger = LoggerFactory.getLogger(Utility.class);
 
     private static ObjectMapper mapper = new ObjectMapper().registerModule(new JodaModule());
 
@@ -158,5 +160,34 @@ public class ResponseUtility {
     public static <T> T StringToObject(String jsonString, Class<?> type) throws IOException {
         return (T)mapper.readValue(jsonString, type);
 
+    }
+
+    public static String getApiName(HttpServletRequest request) {
+
+        String apiName = request.getRequestURI();
+
+        Map object = (Map) request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+        if(object != null && object.size() > 0){
+            for(int i = 0 ; i < object.size(); i++){
+                apiName = StringUtils.substringBeforeLast(apiName, FieldSeparator.FORWARD_SLASH);
+            }
+        }
+        apiName = StringUtils.substringAfterLast(apiName, FieldSeparator.FORWARD_SLASH);
+
+        return apiName;
+    }
+
+    public static Map<String, Object> convertToMap(Object redisObj) {
+        Map<String, Object> redisClass = new HashMap<>();
+        Field[] fields = redisObj.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            try {
+                redisClass.put(field.getName(), field.get(redisObj));
+            } catch (IllegalAccessException e) {
+                logger.error("Exception occurred while converting object to map with probable cause -", e);
+            }
+        }
+        return redisClass;
     }
 }
