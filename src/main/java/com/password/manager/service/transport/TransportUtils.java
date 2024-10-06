@@ -63,7 +63,7 @@ public class TransportUtils {
 
             throw new Exception(e);
 
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
 
             logger.error("Error occurred during postJsonRequest Exception :: " + e);
 

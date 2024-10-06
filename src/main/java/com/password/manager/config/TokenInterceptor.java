@@ -61,19 +61,18 @@ public class TokenInterceptor implements AsyncHandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
         try {
-            String authorization = request.getHeader(AUTHORIZATION_HEADER);
             String apiName = Utility.getApiName(request);
             String product = request.getHeader(PRODUCT);
-            validateTrueOrThrow(StringUtils.isNotBlank(product), PRODUCT_CANNOT_BE_EMPTY);
-
-
-            boolean apiPresentInSkipConfig = isApiPresentInSkipConfig(apiName, product);
-            if (apiPresentInSkipConfig) {
-                LOGGER.debug(AUTH_SKIPPED_COMPLETELY_MESSAGE, apiName, product);
-                return true;
-            }
-
-            authenticateAndAuthorizeUser(request, product, apiName);
+//            validateTrueOrThrow(StringUtils.isNotBlank(product), PRODUCT_CANNOT_BE_EMPTY);
+//
+//
+//            boolean apiPresentInSkipConfig = isApiPresentInSkipConfig(apiName, product);
+//            if (apiPresentInSkipConfig) {
+//                LOGGER.debug(AUTH_SKIPPED_COMPLETELY_MESSAGE, apiName, product);
+//                return true;
+//            }
+//
+//            authenticateAndAuthorizeUser(request, product, apiName);
 
             return true;
 

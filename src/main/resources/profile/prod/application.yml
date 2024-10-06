@@ -1,0 +1,32 @@
+# Server configuration
+
+server:
+  port: 10003
+
+# Security settings
+security:
+  ignored: /**/public
+
+passmanager:
+  tmp:
+    dir: /tmp
+
+
+#user Authentication
+userAuthentication:
+  login:
+    api: https://api.r-sharma.in/user/user-login
+  createuser:
+    api: https://api.r-sharma.in/user/new-user
+  forgot:
+    password:
+      api: https://api.r-sharma.in/user/forget-password
+  validate2faOtp:
+    api: https://api.r-sharma.in/user/validate-email-otp
+
+
+# Email connector API
+connector:
+  email:
+    send:
+      api: https://connector.r-sharma.in/email-connector/send-mail

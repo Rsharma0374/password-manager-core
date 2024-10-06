@@ -1,43 +1,47 @@
 package com.password.manager.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.password.manager.utility.Utility;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.MongoDatabaseFactory;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
-import org.springframework.data.mongodb.core.convert.DbRefResolver;
-import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
-import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
-import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
-import org.springframework.data.mongodb.gridfs.GridFsTemplate;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+
+import java.util.Properties;
 
 @Configuration
 public class DatabaseConfig {
 
-    @Value("${spring.data.mongodb.uri}")
-    private String mongoUri;
+    private static String ACCESS_KEY = "";
+    private static String SECRET_KEY = "";
+    private static final String DYNAMO_DB_ACCESS_KEY = "DYNAMO_DB_ACCESS_KEY";
+    private static final String DYNAMO_DB_SECRET_KEY = "DYNAMO_DB_SECRET_KEY";
+    private static final String PASS_MANAGER_PROPERTIES_PATH = "/opt/configs/passmanager.properties";
 
-    @Bean
-    public MongoDatabaseFactory mongoDbFactory() {
-        return new SimpleMongoClientDatabaseFactory(mongoUri);
+    static {
+        Properties properties = Utility.fetchProperties(PASS_MANAGER_PROPERTIES_PATH);
+        if (null != properties) {
+            ACCESS_KEY = properties.getProperty(DYNAMO_DB_ACCESS_KEY);
+            SECRET_KEY = properties.getProperty(DYNAMO_DB_SECRET_KEY);
+        }
     }
 
     @Bean
-    public MongoTemplate mongoTemplate() {
-        return new MongoTemplate(mongoDbFactory());
+    public DynamoDbClient dynamoDbClient() {
+        return DynamoDbClient.builder()
+                .region(Region.AP_SOUTH_1)
+                .credentialsProvider(StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(ACCESS_KEY, SECRET_KEY)))
+                .build();
     }
 
     @Bean
-    public GridFsTemplate gridFsTemplate() throws Exception {
-        return new GridFsTemplate(mongoDbFactory(), mappingMongoConverter());
+    public DynamoDbEnhancedClient dynamoDbEnhancedClient(DynamoDbClient dynamoDbClient) {
+        return DynamoDbEnhancedClient.builder()
+                .dynamoDbClient(dynamoDbClient)
+                .build();
     }
 
-    @Bean
-    public MappingMongoConverter mappingMongoConverter() throws Exception {
-        DbRefResolver dbRefResolver = new DefaultDbRefResolver(mongoDbFactory());
-        MappingMongoConverter converter = new MappingMongoConverter(dbRefResolver, new MongoMappingContext());
-        // Add any custom conversions if required
-        return converter;
-    }
 }

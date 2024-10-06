@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.HandlerMapping;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
@@ -189,5 +190,16 @@ public class Utility {
             }
         }
         return redisClass;
+    }
+
+    public static Properties fetchProperties(String passManagerPropertiesPath) {
+        Properties properties = new Properties();
+        try {
+            properties.load(new FileInputStream(passManagerPropertiesPath));
+            return properties;
+        } catch (IOException e) {
+            logger.error("Exception occurred while getting pass manager config with probable cause - ", e);
+            return null;
+        }
     }
 }

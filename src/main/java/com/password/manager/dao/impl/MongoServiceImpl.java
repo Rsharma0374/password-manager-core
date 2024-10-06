@@ -1,7 +1,8 @@
 package com.password.manager.dao.impl;
 
-import com.mongodb.BasicDBObject;
 import com.password.manager.configuration.ActionConfiguration;
+import com.password.manager.configuration.MasterMappingConfiguration;
+import com.password.manager.constant.Constants;
 import com.password.manager.dao.MongoService;
 import com.password.manager.model.UserCredsCollection;
 import com.password.manager.model.master.ApiRoleAuthorisationMaster;
@@ -9,14 +10,17 @@ import com.password.manager.request.UserCredsRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class MongoServiceImpl implements MongoService {
@@ -100,6 +104,48 @@ public class MongoServiceImpl implements MongoService {
         } catch (Exception e) {
             logger.error("Exception occurred while fetching authentication master for api {}, product {} and method {} with probable cause - ",apiName, product, httpMethod, e);
             return null;
+        }
+    }
+
+    @Override
+    public MasterMappingConfiguration getMasterMappingConfiguration(String product, String masterName) {
+        try {
+            Query query = new Query();
+            query.addCriteria(Criteria.where("product").is(product)
+                    .and("destinationMasterName").is(masterName)
+                    .and("enable").is(true));
+
+            return mongoTemplate.findOne(query, MasterMappingConfiguration.class);
+
+        } catch (Exception e) {
+            logger.error("Exception occurred while fetching master mapping for product {} and mastername {} with probable cause - ", product, masterName, e);
+            return null;
+        }
+    }
+
+    @Override
+    public boolean insertApiRoleAuthorisationMaster(List<ApiRoleAuthorisationMaster> apiRoleAuthorisationMasters, String product) {
+
+        try {
+            if (CollectionUtils.isEmpty(apiRoleAuthorisationMasters)) {
+                return false;
+            }
+
+            Query query = new Query();
+            query.addCriteria(Criteria
+                    .where(Constants.PRODUCT).is(product)
+                    .and(Constants.ACTIVE).is(true));
+
+            Update update = new Update();
+            update.set(Constants.ACTIVE, false);
+
+            mongoTemplate.updateMulti(query, update, ApiRoleAuthorisationMaster.class);
+            mongoTemplate.insert(apiRoleAuthorisationMasters, ApiRoleAuthorisationMaster.class);
+
+            return true;
+        } catch (DataAccessException e) {
+            logger.error("Error occurred while insertApiRoleAuthorisationMaster for product {} as - ", product, e);
+            return false;
         }
     }
 }

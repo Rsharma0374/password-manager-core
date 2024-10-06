@@ -1,38 +1,49 @@
 package com.password.manager.configuration;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.data.mongodb.core.mapping.Document;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Set;
 
-@Document(collection = "actionConfiguration")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@DynamoDbBean
 public class ActionConfiguration {
 
-    @JsonProperty("sProductName")
+    private String id;
+
     private String  productName;
 
-    @JsonProperty("sActionName")
     private String  actionName;
 
-    @JsonProperty("bEnable")
     private boolean enable;
 
-    @JsonProperty("dtCreatedDate")
-    private Date createdDate = new Date();
+    private Instant createdDate = Instant.now();
 
-    @JsonProperty("dtLastUpdateDate")
-    private Date lastUpdateDate;
+    private Instant lastUpdateDate;
 
-    @JsonProperty("sAuthenticationMode")
     private String authenticationMode;
 
-    @JsonProperty("sAuthorisationMode")
     private String authorisationMode;
 
-    @JsonProperty("aSkipApiList")
     private Set<String> skipApiList;
 
+    @DynamoDbPartitionKey
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    @DynamoDbAttribute("productName")
     public String getProductName() {
         return productName;
     }
@@ -41,6 +52,7 @@ public class ActionConfiguration {
         this.productName = productName;
     }
 
+    @DynamoDbAttribute("actionName")
     public String getActionName() {
         return actionName;
     }
@@ -49,6 +61,7 @@ public class ActionConfiguration {
         this.actionName = actionName;
     }
 
+    @DynamoDbAttribute("enable")
     public boolean isEnable() {
         return enable;
     }
@@ -57,22 +70,25 @@ public class ActionConfiguration {
         this.enable = enable;
     }
 
-    public Date getCreatedDate() {
+    @DynamoDbAttribute("createdDate")
+    public Instant getCreatedDate() {
         return createdDate;
     }
 
-    public void setCreatedDate(Date createdDate) {
+    public void setCreatedDate(Instant createdDate) {
         this.createdDate = createdDate;
     }
 
-    public Date getLastUpdateDate() {
+    @DynamoDbAttribute("lastUpdateDate")
+    public Instant getLastUpdateDate() {
         return lastUpdateDate;
     }
 
-    public void setLastUpdateDate(Date lastUpdateDate) {
+    public void setLastUpdateDate(Instant lastUpdateDate) {
         this.lastUpdateDate = lastUpdateDate;
     }
 
+    @DynamoDbAttribute("authenticationMode")
     public String getAuthenticationMode() {
         return authenticationMode;
     }
@@ -81,6 +97,7 @@ public class ActionConfiguration {
         this.authenticationMode = authenticationMode;
     }
 
+    @DynamoDbAttribute("authorisationMode")
     public String getAuthorisationMode() {
         return authorisationMode;
     }
@@ -89,6 +106,7 @@ public class ActionConfiguration {
         this.authorisationMode = authorisationMode;
     }
 
+    @DynamoDbAttribute("skipApiList")
     public Set<String> getSkipApiList() {
         return skipApiList;
     }

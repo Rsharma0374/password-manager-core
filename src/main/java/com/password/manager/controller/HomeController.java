@@ -1,9 +1,13 @@
 package com.password.manager.controller;
 
+import com.password.manager.configuration.ActionConfiguration;
 import com.password.manager.request.LoginRequest;
 import com.password.manager.request.UserCredsRequest;
 import com.password.manager.response.BaseResponse;
+import com.password.manager.service.ConfigService;
+import com.password.manager.service.FileUploadService;
 import com.password.manager.service.HomeManager;
+import com.password.manager.utility.FileUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,8 +16,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotNull;
+import java.io.File;
+import org.apache.commons.io.FileUtils;
+
 
 @RestController
 @RequestMapping("/password-manager")
@@ -23,6 +31,12 @@ public class HomeController {
 
     @Autowired
     HomeManager homeManager;
+
+    @Autowired
+    FileUploadService fileUploadService;
+
+    @Autowired
+    private ConfigService configService;
 
     @GetMapping("/welcome")
     public String getResult(){
@@ -50,7 +64,7 @@ public class HomeController {
     public ResponseEntity<BaseResponse> getLogin(
             @Validated(value = {LoginRequest.FetchGrp.class})
             @RequestBody @NotNull LoginRequest loginRequest,
-            HttpServletRequest httpRequest) throws Exception {
+            HttpServletRequest httpRequest) {
 
         logger.debug("{} controller started",EndPointReferrer.LOGIN);
 
@@ -88,5 +102,29 @@ public class HomeController {
         logger.debug("delete-data endpoint started.");
 
         return new ResponseEntity<>(homeManager.deleteUserData(userCredsRequest), HttpStatus.OK);
+    }
+
+    @PostMapping(EndPointReferrer.API_AUTHENTICATION_MASTER)
+    public ResponseEntity<BaseResponse> uploadApiAuthenticationMaster(
+            @RequestParam(value = "file", required = true) @NotNull final MultipartFile file,
+            @RequestParam @NotNull String product) {
+        File uploadedFile = FileUtil.saveFileToStagingDirectory(file);
+        BaseResponse baseResponse = fileUploadService.uploadApiAuthenticationMaster(uploadedFile, product);
+        FileUtils.deleteQuietly(uploadedFile);
+        return new ResponseEntity<>(baseResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/add-action-config")
+    public ResponseEntity<BaseResponse> addActionConfig(
+            @RequestBody @NotNull ActionConfiguration actionConfiguration) {
+        logger.info("Inside add action config controller");
+        return new ResponseEntity<>(configService.addActionConfig(actionConfiguration), HttpStatus.OK);
+    }
+
+    @PostMapping("/update-action-config")
+    public ResponseEntity<BaseResponse> updateActionConfig(
+            @RequestBody @NotNull ActionConfiguration actionConfiguration) {
+        logger.info("Inside add action config controller");
+        return new ResponseEntity<>(configService.updateActionConfig(actionConfiguration), HttpStatus.OK);
     }
 }
