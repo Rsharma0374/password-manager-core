@@ -148,4 +148,14 @@ public class MongoServiceImpl implements MongoService {
             return false;
         }
     }
+
+    @Override
+    public boolean addActionConfiguration(ActionConfiguration actionConfiguration) {
+        return false;
+    }
+
+    @Override
+    public boolean updateActionConfiguration(ActionConfiguration actionConfiguration) {
+        return false;
+    }
 }

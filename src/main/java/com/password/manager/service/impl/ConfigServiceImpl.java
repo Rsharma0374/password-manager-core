@@ -1,7 +1,7 @@
 package com.password.manager.service.impl;
 
 import com.password.manager.configuration.ActionConfiguration;
-import com.password.manager.dao.DynamoDbService;
+import com.password.manager.dao.MongoService;
 import com.password.manager.response.BaseResponse;
 import com.password.manager.response.Error;
 import com.password.manager.service.ConfigService;
@@ -19,7 +19,7 @@ public class ConfigServiceImpl implements ConfigService {
     private static final Logger logger = LoggerFactory.getLogger(ConfigServiceImpl.class);
 
     @Autowired
-    private DynamoDbService dynamoDbService;
+    private MongoService mongoService;
 
     @Override
     public BaseResponse addActionConfig(ActionConfiguration actionConfiguration) {
@@ -27,7 +27,7 @@ public class ConfigServiceImpl implements ConfigService {
         BaseResponse baseResponse;
         boolean success;
         try {
-            success = dynamoDbService.addActionConfiguration(actionConfiguration);
+            success = mongoService.addActionConfiguration(actionConfiguration);
 
             if (success) {
                 baseResponse = Utility.getBaseResponse(HttpStatus.OK, "Record inserted successfully.");
@@ -51,7 +51,7 @@ public class ConfigServiceImpl implements ConfigService {
         BaseResponse baseResponse;
         boolean success;
         try {
-            success = dynamoDbService.updateActionConfiguration(actionConfiguration);
+            success = mongoService.updateActionConfiguration(actionConfiguration);
 
             if (success) {
                 baseResponse = Utility.getBaseResponse(HttpStatus.OK, "Record updated successfully.");

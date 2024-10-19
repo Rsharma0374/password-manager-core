@@ -21,4 +21,7 @@ public interface MongoService {
 
     boolean insertApiRoleAuthorisationMaster(List<ApiRoleAuthorisationMaster> apiRoleAuthorisationMasters, String product);
 
+    boolean addActionConfiguration(ActionConfiguration actionConfiguration);
+
+    boolean updateActionConfiguration(ActionConfiguration actionConfiguration);
 }
