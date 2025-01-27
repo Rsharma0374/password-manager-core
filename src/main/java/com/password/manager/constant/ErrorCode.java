@@ -13,4 +13,6 @@ public class ErrorCode {
     public static final String RUNTIME_EXCEPTION = "Runtime exception ";
 
     public static final String COLUMN_MAPPING_IS_INCORRECT = "column mapping is incorrect";
+
+    public static final String USER_NOT_FOUND_ERROR = "No User found against provided data.";
 }

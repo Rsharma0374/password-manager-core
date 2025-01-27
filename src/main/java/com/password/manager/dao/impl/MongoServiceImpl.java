@@ -6,6 +6,7 @@ import com.password.manager.constant.Constants;
 import com.password.manager.dao.MongoService;
 import com.password.manager.model.UserCredsCollection;
 import com.password.manager.model.master.ApiRoleAuthorisationMaster;
+import com.password.manager.request.DashboardDetailsRequest;
 import com.password.manager.request.UserCredsRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,47 +34,47 @@ public class MongoServiceImpl implements MongoService {
     @Autowired
     private GridFsTemplate gridFsTemplate;
 
-    @Override
-    public UserCredsCollection getUserData(UserCredsRequest userCredsRequest) {
-        logger.info("Inside getUserData for user {}", userCredsRequest.getLoginUser());
-        try {
-            Query query = new Query();
-            query.addCriteria(Criteria.where("loginUsername").is(userCredsRequest.getLoginUser()));
-
-            return mongoTemplate.findOne(query, UserCredsCollection.class);
-        } catch (Exception e) {
-            logger.error("Exception occurred due to - ", e);
-            return null;
-        }
-    }
-
-    @Override
-    public boolean saveCredsCollection(UserCredsCollection userCredsCollection) {
-        logger.info("Inside save cred collection method for user - {}", userCredsCollection.getLoginUsername());
-
-        try {
-            Query query = new Query();
-            query.addCriteria(Criteria.where("loginUsername").is(userCredsCollection.getLoginUsername()));
-
-            boolean isExist = mongoTemplate.exists(query, UserCredsCollection.class);
-
-            if (!isExist) {
-                mongoTemplate.insert(userCredsCollection);
-            } else {
-                // If the document exists, update it using upsert logic
-                Query query1 = new Query(Criteria.where("loginUsername").is(userCredsCollection.getLoginUsername()));
-                Update update = new Update();
-                update.set("credLists", userCredsCollection.getCredLists());
-                update.set("lastUpdatedDate", new Date());
-                mongoTemplate.updateFirst(query1, update, UserCredsCollection.class);
-            }
-            return true;
-
-        } catch (Exception e) {
-            logger.error("Exception occurred in method save creds collection for user {} with probable cause - ", userCredsCollection.getLoginUsername(), e);
-            return false;
-        }
-    }
+//    @Override
+//    public UserCredsCollection getUserData(UserCredsRequest userCredsRequest) {
+//        logger.info("Inside getUserData for user {}", userCredsRequest.getLoginUser());
+//        try {
+//            Query query = new Query();
+//            query.addCriteria(Criteria.where("loginUsername").is(userCredsRequest.getLoginUser()));
+//
+//            return mongoTemplate.findOne(query, UserCredsCollection.class);
+//        } catch (Exception e) {
+//            logger.error("Exception occurred due to - ", e);
+//            return null;
+//        }
+//    }
+//
+//    @Override
+//    public boolean saveCredsCollection(UserCredsCollection userCredsCollection) {
+//        logger.info("Inside save cred collection method for user - {}", userCredsCollection.getLoginUsername());
+//
+//        try {
+//            Query query = new Query();
+//            query.addCriteria(Criteria.where("loginUsername").is(userCredsCollection.getLoginUsername()));
+//
+//            boolean isExist = mongoTemplate.exists(query, UserCredsCollection.class);
+//
+//            if (!isExist) {
+//                mongoTemplate.insert(userCredsCollection);
+//            } else {
+//                // If the document exists, update it using upsert logic
+//                Query query1 = new Query(Criteria.where("loginUsername").is(userCredsCollection.getLoginUsername()));
+//                Update update = new Update();
+//                update.set("credLists", userCredsCollection.getCredLists());
+//                update.set("lastUpdatedDate", new Date());
+//                mongoTemplate.updateFirst(query1, update, UserCredsCollection.class);
+//            }
+//            return true;
+//
+//        } catch (Exception e) {
+//            logger.error("Exception occurred in method save creds collection for user {} with probable cause - ", userCredsCollection.getLoginUsername(), e);
+//            return false;
+//        }
+//    }
 
     @Override
     public ActionConfiguration getActionConfigByProductAndActionName(String product, String apiSkipAuthentication) {
@@ -157,5 +158,28 @@ public class MongoServiceImpl implements MongoService {
     @Override
     public boolean updateActionConfiguration(ActionConfiguration actionConfiguration) {
         return false;
+    }
+
+
+
+
+
+    @Override
+    public UserCredsCollection getUserDataByIdentifier(DashboardDetailsRequest dashboardDetailsRequest) {
+        logger.info("Inside getUserDataByIdentifier for user {}", dashboardDetailsRequest.getIdentifier());
+        try {
+            Query query = new Query();
+            query.addCriteria(Criteria.where("productName").is(dashboardDetailsRequest.getProductName())
+                    .orOperator(
+                            Criteria.where("emailId").is(dashboardDetailsRequest.getIdentifier()),
+                            Criteria.where("userName").is(dashboardDetailsRequest.getIdentifier())
+                    )
+                    .and("accountActive").is(true));
+
+            return mongoTemplate.findOne(query, UserCredsCollection.class);
+        } catch (Exception e) {
+            logger.error("Exception occurred due to - ", e);
+            return null;
+        }
     }
 }

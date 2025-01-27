@@ -3,14 +3,20 @@ package com.password.manager.service.transport;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.password.manager.utility.Utility;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TransportUtils {
     private static final Logger logger = LoggerFactory.getLogger(TransportUtils.class);
@@ -69,5 +75,69 @@ public class TransportUtils {
 
             throw new Exception(e);
         }
+    }
+
+    public static Object getRequest(String validationUrl, String token, String username, Class<?> name) throws Exception {
+        logger.debug("postJsonRequest  started for url {}", validationUrl);
+
+        try {
+
+            if (StringUtils.isBlank(validationUrl)) {
+
+
+                logger.error("get request config not setup for service.");
+
+                throw new Exception(String.format("postJsonRequest config not setup for service fetching response for {} ", name.getSimpleName()));
+            }
+            String bearerToken = "Bearer " + token;
+
+
+            // Create an instance of HttpClient
+            HttpClient httpClient = HttpClient.newHttpClient();
+
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", bearerToken);
+            headers.put("Content-Type", String.valueOf(MediaType.APPLICATION_JSON));
+            headers.put("userName", username);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(validationUrl))
+                    .headers(headers.entrySet()
+                            .stream()
+                            .map(e -> new String[]{e.getKey(), e.getValue()})
+                            .flatMap(Arrays::stream)
+                            .toArray(String[]::new))
+                    .GET()
+                    .build();
+
+            // Send the POST request and receive the response
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            String payLoadString = "";
+            JSONObject jsonObject = new JSONObject(response.body());
+//            if (jsonObject.has("oBody")) {
+//                JSONObject oBody = jsonObject.getJSONObject("oBody");
+//                if (null != oBody && oBody.has("payLoad")) {
+//                    JSONObject payLoad = oBody.getJSONObject("payLoad");
+//                    payLoadString = payLoad.toString();
+//                    logger.info(payLoadString);
+//
+//                }
+//            }
+            return Utility.StringToObject(jsonObject.toString(), name);
+
+        } catch (JsonProcessingException e) {
+
+            logger.error("Error occured during postJsonRequest JsonProcessingException :: " + e);
+
+            throw new Exception(e);
+
+        } catch (InterruptedException e) {
+
+            logger.error("Error occurred during postJsonRequest Exception :: " + e);
+
+            throw new Exception(e);
+        }
+
     }
 }

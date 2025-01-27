@@ -1,6 +1,7 @@
 package com.password.manager.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -10,11 +11,15 @@ import java.util.List;
 
 @Document (collection = "credentialCollection")
 @ToString
+@Data
 public class UserCredsCollection {
 
     @Id
-    @JsonProperty("sLoginUserName")
-    private String loginUsername;
+    @JsonProperty("sUserName")
+    private String userName;
+
+    @JsonProperty("sEmailId")
+    private String emailId;
 
     @JsonProperty("aCredsList")
     List<CredList> credLists;
@@ -22,31 +27,11 @@ public class UserCredsCollection {
     @JsonProperty("dtLastUpdatedDate")
     private Date lastUpdatedDate;
 
-    public String getLoginUsername() {
-        return loginUsername;
-    }
-
-    public void setLoginUsername(String loginUsername) {
-        this.loginUsername = loginUsername;
-    }
-
-    public List<CredList> getCredLists() {
-        return credLists;
-    }
-
-    public void setCredLists(List<CredList> credLists) {
-        this.credLists = credLists;
-    }
-
-    public Date getLastUpdatedDate() {
-        return lastUpdatedDate;
-    }
-
-    public void setLastUpdatedDate(Date lastUpdatedDate) {
-        this.lastUpdatedDate = lastUpdatedDate;
-    }
+    @JsonProperty("bAccountActive")
+    private boolean accountActive;
 
     @ToString
+    @Data
     public static class CredList {
 
         @JsonProperty("sUserName")
@@ -58,39 +43,8 @@ public class UserCredsCollection {
         @JsonProperty("sPassword")
         private String password;
 
-        @JsonProperty("sPlatformName")
-        private String platformName;
+        @JsonProperty("sService")
+        private String service;
 
-        public String getUsername() {
-            return username;
-        }
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public void setEmail(String email) {
-            this.email = email;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
-
-        public String getPlatformName() {
-            return platformName;
-        }
-
-        public void setPlatformName(String platformName) {
-            this.platformName = platformName;
-        }
     }
 }

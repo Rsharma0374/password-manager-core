@@ -4,14 +4,15 @@ import com.password.manager.configuration.ActionConfiguration;
 import com.password.manager.configuration.MasterMappingConfiguration;
 import com.password.manager.model.UserCredsCollection;
 import com.password.manager.model.master.ApiRoleAuthorisationMaster;
+import com.password.manager.request.DashboardDetailsRequest;
 import com.password.manager.request.UserCredsRequest;
 
 import java.util.List;
 
 public interface MongoService {
-    UserCredsCollection getUserData(UserCredsRequest userCredsRequest);
-
-    boolean saveCredsCollection(UserCredsCollection userCredsCollection);
+//    UserCredsCollection getUserData(UserCredsRequest userCredsRequest);
+//
+//    boolean saveCredsCollection(UserCredsCollection userCredsCollection);
 
     ActionConfiguration getActionConfigByProductAndActionName(String product, String apiSkipAuthentication);
 
@@ -24,4 +25,6 @@ public interface MongoService {
     boolean addActionConfiguration(ActionConfiguration actionConfiguration);
 
     boolean updateActionConfiguration(ActionConfiguration actionConfiguration);
+
+    UserCredsCollection getUserDataByIdentifier(DashboardDetailsRequest dashboardDetailsRequest);
 }

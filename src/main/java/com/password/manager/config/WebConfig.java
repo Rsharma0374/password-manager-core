@@ -16,9 +16,14 @@ public class WebConfig implements WebMvcConfigurer {
     @Autowired
     private TokenInterceptor tokenInterceptor;
 
+    @Autowired
+    private TokenValidationInterceptor tokenValidationInterceptor;
+
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(tokenInterceptor);
+//        registry.addInterceptor(tokenInterceptor);
+        registry.addInterceptor(tokenValidationInterceptor);
     }
 
     @Override
