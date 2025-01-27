@@ -3,6 +3,7 @@ package com.password.manager.controller;
 import com.password.manager.configuration.ActionConfiguration;
 import com.password.manager.request.DashboardDetailsRequest;
 import com.password.manager.request.LoginRequest;
+import com.password.manager.request.UserCreation;
 import com.password.manager.request.UserCredsRequest;
 import com.password.manager.response.BaseResponse;
 import com.password.manager.service.ConfigService;
@@ -54,6 +55,12 @@ public class HomeController {
     public ResponseEntity<BaseResponse> getDashboardDetails(@RequestBody DashboardDetailsRequest dashboardDetailsRequest) {
         logger.info("getDashboardDetails");
         return new ResponseEntity<>(homeManager.getDashboardDetails(dashboardDetailsRequest), HttpStatus.OK);
+    }
+
+    @PostMapping(EndPointReferrer.CREATE_USER)
+    public ResponseEntity<BaseResponse> createUser(@RequestBody UserCreation userCreation) {
+        logger.info(EndPointReferrer.CREATE_USER);
+        return new ResponseEntity<>(homeManager.createUser(userCreation), HttpStatus.OK);
     }
 //
 //    @PostMapping("/get-data")

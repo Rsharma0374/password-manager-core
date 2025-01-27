@@ -248,4 +248,25 @@ public class HomeManagerImpl implements HomeManager {
         }
         return baseResponse;
     }
+
+    @Override
+    public BaseResponse createUser(UserCreation userCreation) {
+        BaseResponse baseResponse = null;
+        try {
+            UserCredsCollection userCredsCollection = new UserCredsCollection();
+            userCredsCollection.setUserName(userCreation.getUserName());
+            userCredsCollection.setEmailId(userCreation.getEmail());
+            userCredsCollection.setAccountActive(true);
+            userCredsCollection.setLastUpdatedDate(new Date());
+
+            mongoService.saveUser(userCredsCollection);
+
+            baseResponse = Utility.getBaseResponse(HttpStatus.CREATED, userCredsCollection);
+
+        } catch (Exception e) {
+            logger.error("Exception occurred while creating user - ", e);
+            baseResponse = Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(e.getMessage()));
+        }
+        return baseResponse;
+    }
 }

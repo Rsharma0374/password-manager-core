@@ -27,4 +27,6 @@ public interface MongoService {
     boolean updateActionConfiguration(ActionConfiguration actionConfiguration);
 
     UserCredsCollection getUserDataByIdentifier(DashboardDetailsRequest dashboardDetailsRequest);
+
+    boolean saveUser(UserCredsCollection userCredsCollection);
 }

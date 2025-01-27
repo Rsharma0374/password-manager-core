@@ -1,6 +1,8 @@
 package com.password.manager.service.transport;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.password.manager.response.BaseResponse;
 import com.password.manager.utility.Utility;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -77,7 +79,7 @@ public class TransportUtils {
         }
     }
 
-    public static Object getRequest(String validationUrl, String token, String username, Class<?> name) throws Exception {
+    public static int validateToken(String validationUrl, String token, String username) throws Exception {
         logger.debug("postJsonRequest  started for url {}", validationUrl);
 
         try {
@@ -87,7 +89,7 @@ public class TransportUtils {
 
                 logger.error("get request config not setup for service.");
 
-                throw new Exception(String.format("postJsonRequest config not setup for service fetching response for {} ", name.getSimpleName()));
+                throw new Exception("postJsonRequest config not setup for service.");
             }
             String bearerToken = "Bearer " + token;
 
@@ -113,18 +115,7 @@ public class TransportUtils {
             // Send the POST request and receive the response
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            String payLoadString = "";
-            JSONObject jsonObject = new JSONObject(response.body());
-//            if (jsonObject.has("oBody")) {
-//                JSONObject oBody = jsonObject.getJSONObject("oBody");
-//                if (null != oBody && oBody.has("payLoad")) {
-//                    JSONObject payLoad = oBody.getJSONObject("payLoad");
-//                    payLoadString = payLoad.toString();
-//                    logger.info(payLoadString);
-//
-//                }
-//            }
-            return Utility.StringToObject(jsonObject.toString(), name);
+            return response.statusCode();
 
         } catch (JsonProcessingException e) {
 

@@ -17,13 +17,13 @@ public class TokenValidationService {
     public boolean validateToken(String token, String username) {
         try {
 
-
-            validationUrl = validationUrl.concat("/" + token);
-
-            BaseResponse res = (BaseResponse) TransportUtils.getRequest(validationUrl, token, username, BaseResponse.class);
+            String url = validationUrl + "/" + token;
 
 
-            return res.getStatus().getStatusCode() == HttpStatus.OK.value();
+            int responseCode = TransportUtils.validateToken(url, token, username);
+
+
+            return responseCode == HttpStatus.OK.value();
         } catch (Exception e) {
             return false;
         }

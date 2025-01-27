@@ -7,6 +7,7 @@ import com.password.manager.utility.Utility;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -28,6 +29,13 @@ public class TokenValidationInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // Skip validation for public endpoints
         if (request.getRequestURI().startsWith("/public/")) {
+            return true;
+        }
+        if (request.getMethod().equals(HttpMethod.OPTIONS.toString())) {
+            return true;
+        }
+        String apiName = Utility.getApiName(request);
+        if (apiName.equalsIgnoreCase("create-user")) {
             return true;
         }
 
