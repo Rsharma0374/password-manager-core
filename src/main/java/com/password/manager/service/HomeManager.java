@@ -10,9 +10,9 @@ import jakarta.servlet.http.HttpServletRequest;
 public interface HomeManager {
     BaseResponse saveUserData(UserCredsRequest userCredsRequest, HttpServletRequest httpServletRequest);
 //
-//    BaseResponse updateUserData(UserCredsRequest userCredsRequest);
+    BaseResponse updateUserData(UserCredsRequest userCredsRequest, HttpServletRequest httpServletRequest);
 //
-//    BaseResponse deleteUserData(UserCredsRequest userCredsRequest);
+    BaseResponse deleteUserData(UserCredsRequest userCredsRequest, HttpServletRequest httpServletRequest);
 //
 //    BaseResponse getUserData(UserCredsRequest userCredsRequest);
 

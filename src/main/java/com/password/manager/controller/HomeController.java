@@ -78,22 +78,22 @@ public class HomeController {
 
         return new ResponseEntity<>(homeManager.saveUserData(userCredsRequest, request), HttpStatus.OK);
     }
-//
-//    @PostMapping("/update-data")
-//    public ResponseEntity<BaseResponse> updateUserData(@RequestBody @NotNull UserCredsRequest userCredsRequest) {
-//
-//        logger.debug("update-data endpoint started.");
-//
-//        return new ResponseEntity<>(homeManager.updateUserData(userCredsRequest), HttpStatus.OK);
-//    }
-//
-//    @PostMapping("/delete-data")
-//    public ResponseEntity<BaseResponse> deleteUserData(@RequestBody @NotNull UserCredsRequest userCredsRequest) {
-//
-//        logger.debug("delete-data endpoint started.");
-//
-//        return new ResponseEntity<>(homeManager.deleteUserData(userCredsRequest), HttpStatus.OK);
-//    }
+
+    @PostMapping("/update-data")
+    public ResponseEntity<BaseResponse> updateUserData(@RequestBody @NotNull UserCredsRequest userCredsRequest, HttpServletRequest request) {
+
+        logger.debug("update-data endpoint started.");
+
+        return new ResponseEntity<>(homeManager.updateUserData(userCredsRequest, request), HttpStatus.OK);
+    }
+
+    @PostMapping("/delete-data")
+    public ResponseEntity<BaseResponse> deleteUserData(@RequestBody @NotNull UserCredsRequest userCredsRequest, HttpServletRequest request) {
+
+        logger.debug("delete-data endpoint started.");
+
+        return new ResponseEntity<>(homeManager.deleteUserData(userCredsRequest, request), HttpStatus.OK);
+    }
 
     @PostMapping(EndPointReferrer.API_AUTHENTICATION_MASTER)
     public ResponseEntity<BaseResponse> uploadApiAuthenticationMaster(

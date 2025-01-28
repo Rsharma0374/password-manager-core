@@ -56,6 +56,7 @@ public class HomeManagerImpl implements HomeManager {
                     credList.setPassword(userCredsRequest.getPassword());
                     credList.setUsername(userCredsRequest.getUsername());
                     credList.setService(userCredsRequest.getService());
+                    credList.setUrl(userCredsRequest.getUrl());
                     credListsArray.add(credList);
                     userCredsCollection.setCredLists(credListsArray);
 
@@ -82,6 +83,7 @@ public class HomeManagerImpl implements HomeManager {
                     credList.setPassword(userCredsRequest.getPassword());
                     credList.setUsername(userCredsRequest.getUsername());
                     credList.setService(userCredsRequest.getService());
+                    credList.setUrl(userCredsRequest.getUrl());
                     userCredsCollection.getCredLists().add(credList);
 
                     dataSaved = mongoService.saveUser(userCredsCollection);
@@ -114,90 +116,93 @@ public class HomeManagerImpl implements HomeManager {
             return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
         }
     }
-//
-//    @Override
-//    public BaseResponse updateUserData(UserCredsRequest userCredsRequest) {
-//        try {
-//            if (null == userCredsRequest || StringUtils.isEmpty(userCredsRequest.getPassword())
-//                    || StringUtils.isEmpty(userCredsRequest.getLoginUser())
-//                    || StringUtils.isEmpty(userCredsRequest.getPlatformName())) {
-//                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
-//            }
-//            UserCredsCollection userCredsCollection = mongoService.getUserData(userCredsRequest);
-//            if (null == userCredsCollection) {
-//                return Utility.getBaseResponse(HttpStatus.NO_CONTENT, Utility.getNoContentErrorList());
-//
-//            }
-//            List<UserCredsCollection.CredList> credList = userCredsCollection.getCredLists();
-//            if (CollectionUtils.isEmpty(credList)) {
-//                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
-//            }
-//            List<UserCredsCollection.CredList> filteredCredList = credList.stream()
-//                    .filter(f-> Objects.equals(f.getPlatformName(), userCredsRequest.getPlatformName()))
-//                    .collect(Collectors.toList());
-//
-//            for (UserCredsCollection.CredList credList1 : filteredCredList) {
-//                if (StringUtils.equalsIgnoreCase(credList1.getEmail(), userCredsRequest.getEmail())
-//                        || StringUtils.equalsIgnoreCase(credList1.getUsername(), userCredsRequest.getUsername())) {
-//                    credList1.setUsername(userCredsRequest.getUsername());
-//                    credList1.setEmail(userCredsRequest.getEmail());
-//                    credList1.setPlatformName(userCredsRequest.getPlatformName());
-//                    credList1.setPassword(userCredsRequest.getPassword());
-//                    break;
-//                }
-//            }
-//
-//            if (mongoService.saveCredsCollection(userCredsCollection)) {
-//                return Utility.getBaseResponse(HttpStatus.OK, userCredsCollection);
-//            } else {
-//                return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Utility.getInterServerErrorList("Something went wrong, Please contact Administrator."));
-//
-//            }
-//
-//
-//        } catch (Exception e) {
-//            logger.error("Exception occurred while updating user creds with probable cause - ", e);
-//            Error error = new Error();
-//            error.setMessage(e.getMessage());
-//            return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
-//        }
-//    }
-//
-//    @Override
-//    public BaseResponse deleteUserData(UserCredsRequest userCredsRequest) {
-//
-//        try {
-//            if (null == userCredsRequest || StringUtils.isEmpty(userCredsRequest.getLoginUser()) || StringUtils.isEmpty(userCredsRequest.getPlatformName())) {
-//                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
-//            }
-//            UserCredsCollection userCredsCollection = mongoService.getUserData(userCredsRequest);
-//            if (null == userCredsCollection) {
-//                return Utility.getBaseResponse(HttpStatus.NO_CONTENT, Utility.getNoContentErrorList());
-//
-//            }
-//
-//            List<UserCredsCollection.CredList> credList = userCredsCollection.getCredLists();
-//            if (CollectionUtils.isEmpty(credList)) {
-//                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
-//            }
-//            boolean removed = credList.removeIf(f -> (null != f.getPlatformName()
-//                    && StringUtils.equalsIgnoreCase(f.getPlatformName(), userCredsRequest.getPlatformName())
-//                    && StringUtils.equalsIgnoreCase(f.getEmail(), userCredsRequest.getEmail())));
-//            logger.debug("Removed success");
-//
-//            if (mongoService.saveCredsCollection(userCredsCollection)) {
-//                return Utility.getBaseResponse(HttpStatus.OK, userCredsCollection);
-//            } else {
-//                return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Utility.getInterServerErrorList("Something went wrong, Please contact Administrator."));
-//            }
-//
-//        } catch (Exception e) {
-//            logger.error("Exception occurred while deleteUserData with probable cause - ", e);
-//            Error error = new Error();
-//            error.setMessage(e.getMessage());
-//            return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
-//        }
-//    }
+
+    @Override
+    public BaseResponse updateUserData(UserCredsRequest userCredsRequest, HttpServletRequest httpServletRequest) {
+        try {
+            if (null == userCredsRequest) {
+                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
+            }
+            String userName = httpServletRequest.getHeader("userName");
+
+            UserCredsCollection userCredsCollection = mongoService.getUserDataByIdentifier(userName);
+            if (null == userCredsCollection) {
+                return Utility.getBaseResponse(HttpStatus.NO_CONTENT, Utility.getNoContentErrorList());
+
+            }
+            List<UserCredsCollection.CredList> credList = userCredsCollection.getCredLists();
+            if (CollectionUtils.isEmpty(credList)) {
+                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
+            }
+            List<UserCredsCollection.CredList> filteredCredList = credList.stream()
+                    .filter(f-> Objects.equals(f.getService(), userCredsRequest.getService()))
+                    .toList();
+
+
+            for (UserCredsCollection.CredList cred : filteredCredList) {
+                if (StringUtils.equalsIgnoreCase(cred.getEmail(), userCredsRequest.getEmail())) {
+                    cred.setUsername(userCredsRequest.getUsername());
+                    cred.setEmail(userCredsRequest.getEmail());
+                    cred.setService(userCredsRequest.getService());
+                    cred.setPassword(userCredsRequest.getPassword());
+                    cred.setUrl(userCredsRequest.getUrl());
+                    break; // Exit loop after updating the first match
+                }
+            }
+
+            if (mongoService.saveUser(userCredsCollection)) {
+                return Utility.getBaseResponse(HttpStatus.OK, userCredsCollection);
+            } else {
+                return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Utility.getInterServerErrorList("Something went wrong, Please contact Administrator."));
+
+            }
+
+
+        } catch (Exception e) {
+            logger.error("Exception occurred while updating user creds with probable cause - ", e);
+            Error error = new Error();
+            error.setMessage(e.getMessage());
+            return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
+        }
+    }
+
+    @Override
+    public BaseResponse deleteUserData(UserCredsRequest userCredsRequest, HttpServletRequest httpServletRequest) {
+
+        try {
+            if (null == userCredsRequest) {
+                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
+            }
+            String userName = httpServletRequest.getHeader("userName");
+
+            UserCredsCollection userCredsCollection = mongoService.getUserDataByIdentifier(userName);
+            if (null == userCredsCollection) {
+                return Utility.getBaseResponse(HttpStatus.NO_CONTENT, Utility.getNoContentErrorList());
+
+            }
+
+            List<UserCredsCollection.CredList> credList = userCredsCollection.getCredLists();
+            if (CollectionUtils.isEmpty(credList)) {
+                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
+            }
+            boolean removed = credList.removeIf(f -> (null != f.getService()
+                    && StringUtils.equalsIgnoreCase(f.getService(), userCredsRequest.getService())
+                    && StringUtils.equalsIgnoreCase(f.getEmail(), userCredsRequest.getEmail())));
+            logger.debug("Removed success");
+
+            if (mongoService.saveUser(userCredsCollection)) {
+                return Utility.getBaseResponse(HttpStatus.OK, userCredsCollection);
+            } else {
+                return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Utility.getInterServerErrorList("Something went wrong, Please contact Administrator."));
+            }
+
+        } catch (Exception e) {
+            logger.error("Exception occurred while deleteUserData with probable cause - ", e);
+            Error error = new Error();
+            error.setMessage(e.getMessage());
+            return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Collections.singleton(error));
+        }
+    }
 
 //    @Override
 //    public BaseResponse getUserData(UserCredsRequest userCredsRequest) {

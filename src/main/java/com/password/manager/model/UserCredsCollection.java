@@ -46,5 +46,8 @@ public class UserCredsCollection {
         @JsonProperty("sService")
         private String service;
 
+        @JsonProperty("sUrl")
+        private String url;
+
     }
 }

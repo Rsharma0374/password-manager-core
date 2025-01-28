@@ -19,4 +19,7 @@ public class UserCredsRequest {
 
     @JsonProperty("sService")
     private String service;
+
+    @JsonProperty("sUrl")
+    private String url;
 }
