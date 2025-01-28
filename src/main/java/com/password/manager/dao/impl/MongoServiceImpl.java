@@ -183,6 +183,24 @@ public class MongoServiceImpl implements MongoService {
     }
 
     @Override
+    public UserCredsCollection getUserDataByIdentifier(String identifier) {
+        logger.info("Inside getUserDataByIdentifier for user {}", identifier);
+        try {
+            Query query = new Query();
+            query.addCriteria(Criteria.where("accountActive").is(true)
+                    .orOperator(
+                            Criteria.where("email").is(identifier),
+                            Criteria.where("_id").is(identifier)
+                    ));
+
+            return mongoTemplate.findOne(query, UserCredsCollection.class);
+        } catch (Exception e) {
+            logger.error("Exception occurred due to - ", e);
+            return null;
+        }
+    }
+
+    @Override
     public boolean saveUser(UserCredsCollection userCredsCollection) {
         mongoTemplate.save(userCredsCollection);
         return true;

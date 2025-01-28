@@ -28,5 +28,7 @@ public interface MongoService {
 
     UserCredsCollection getUserDataByIdentifier(DashboardDetailsRequest dashboardDetailsRequest);
 
+    UserCredsCollection getUserDataByIdentifier(String identifier);
+
     boolean saveUser(UserCredsCollection userCredsCollection);
 }

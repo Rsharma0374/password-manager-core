@@ -18,8 +18,8 @@ public class UserCredsCollection {
     @JsonProperty("sUserName")
     private String userName;
 
-    @JsonProperty("sEmailId")
-    private String emailId;
+    @JsonProperty("sEmail")
+    private String email;
 
     @JsonProperty("aCredsList")
     List<CredList> credLists;

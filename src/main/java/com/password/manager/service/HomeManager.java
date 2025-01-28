@@ -8,7 +8,7 @@ import com.password.manager.response.BaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 public interface HomeManager {
-//    BaseResponse saveUserData(UserCredsRequest userCredsRequest);
+    BaseResponse saveUserData(UserCredsRequest userCredsRequest, HttpServletRequest httpServletRequest);
 //
 //    BaseResponse updateUserData(UserCredsRequest userCredsRequest);
 //

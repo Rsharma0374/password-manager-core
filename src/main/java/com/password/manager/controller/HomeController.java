@@ -71,13 +71,13 @@ public class HomeController {
 //        return new ResponseEntity<>(homeManager.getUserData(userCredsRequest), HttpStatus.OK);
 //    }
 //
-//    @PostMapping("/save-data")
-//    public ResponseEntity<BaseResponse> saveUserData(@RequestBody @NotNull UserCredsRequest userCredsRequest) {
-//
-//        logger.debug("save-data endpoint started.");
-//
-//        return new ResponseEntity<>(homeManager.saveUserData(userCredsRequest), HttpStatus.OK);
-//    }
+    @PostMapping("/save-data")
+    public ResponseEntity<BaseResponse> saveUserData(@RequestBody @NotNull UserCredsRequest userCredsRequest, HttpServletRequest request) {
+
+        logger.debug("save-data endpoint started.");
+
+        return new ResponseEntity<>(homeManager.saveUserData(userCredsRequest, request), HttpStatus.OK);
+    }
 //
 //    @PostMapping("/update-data")
 //    public ResponseEntity<BaseResponse> updateUserData(@RequestBody @NotNull UserCredsRequest userCredsRequest) {
