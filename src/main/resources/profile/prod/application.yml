@@ -34,4 +34,6 @@ connector:
 
 token:
   validation:
-    url:https://api.guardianservices.in/auth/validate-token
+    url: https://api.guardianservices.in/auth/validate-token
+
+
