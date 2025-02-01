@@ -114,7 +114,7 @@ public class TransportUtils {
 
             // Send the POST request and receive the response
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
+            logger.warn(response.body());
             return response.statusCode();
 
         } catch (JsonProcessingException e) {

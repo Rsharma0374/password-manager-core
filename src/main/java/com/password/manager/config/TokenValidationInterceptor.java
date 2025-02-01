@@ -6,6 +6,8 @@ import com.password.manager.response.Error;
 import com.password.manager.utility.Utility;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import java.util.Collection;
 @Component
 public class TokenValidationInterceptor implements HandlerInterceptor {
 
+    private final Logger logger = LoggerFactory.getLogger(TokenValidationInterceptor.class);
     @Autowired
     private TokenValidationService tokenValidationService;
 
@@ -35,6 +38,7 @@ public class TokenValidationInterceptor implements HandlerInterceptor {
             return true;
         }
         String apiName = Utility.getApiName(request);
+        logger.warn("apiName is: {}", apiName);
         if (apiName.equalsIgnoreCase("create-user")) {
             return true;
         }
@@ -48,8 +52,10 @@ public class TokenValidationInterceptor implements HandlerInterceptor {
 
         try {
             if (tokenValidationService.validateToken(token, userName)) {
+                logger.warn("Token is valid");
                 return true;
             } else {
+                logger.error("Token is not valid");
                 setResponse(response);
                 return false;
             }
