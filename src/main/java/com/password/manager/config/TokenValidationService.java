@@ -21,11 +21,11 @@ public class TokenValidationService {
         try {
 
             String url = validationUrl + "/" + token;
-            logger.warn("Validating token: " + url);
+            logger.warn("Validating token: {}", url);
 
 
             int responseCode = TransportUtils.validateToken(url, token, username);
-            logger.warn("Response code: " + responseCode);
+            logger.warn("Response code: {}", responseCode);
 
             return responseCode == HttpStatus.OK.value();
         } catch (Exception e) {
