@@ -20,7 +20,7 @@ public class TokenValidationService {
     public boolean validateToken(String token, String username) {
         try {
 
-            String url = validationUrl + "/" + token;
+            String url = validationUrl + "/" + token + "/" + username;
             logger.warn("Validating token: {}", url);
 
 
