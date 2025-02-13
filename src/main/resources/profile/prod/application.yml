@@ -5,7 +5,7 @@ server:
 
 spring:
   application:
-    name: pass-manager-service
+    name: PASS-MANAGER-SERVICE
 
 # Security settings
 security:
