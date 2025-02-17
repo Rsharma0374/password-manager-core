@@ -4,21 +4,18 @@ import com.password.manager.constant.ErrorCode;
 import com.password.manager.dao.MongoService;
 import com.password.manager.model.UserCredsCollection;
 import com.password.manager.request.DashboardDetailsRequest;
-import com.password.manager.request.LoginRequest;
 import com.password.manager.request.UserCreation;
 import com.password.manager.request.UserCredsRequest;
 import com.password.manager.response.BaseResponse;
 import com.password.manager.response.Error;
-import com.password.manager.response.LoginResponse;
+import com.password.manager.security.EncryptDecryptService;
 import com.password.manager.service.HomeManager;
-import com.password.manager.service.transport.TransportUtils;
 import com.password.manager.utility.Utility;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -48,23 +45,48 @@ public class HomeManagerImpl implements HomeManager {
             UserCredsCollection userCredsCollection = mongoService.getUserDataByIdentifier(userName);
 
             if (null != userCredsCollection) {
-                List<UserCredsCollection.CredList> credLists = userCredsCollection.getCredLists();
-                if (CollectionUtils.isEmpty(credLists)) {
+                List<UserCredsCollection.EncryptedCred> encryptedCredList = userCredsCollection.getEncryptedCredLists();
+                if (CollectionUtils.isEmpty(encryptedCredList)) {
                     UserCredsCollection.CredList credList = new UserCredsCollection.CredList();
                     List<UserCredsCollection.CredList> credListsArray = new ArrayList<>();
+                    List<UserCredsCollection.EncryptedCred> encryptedCredLists = new ArrayList<>();
+                    UserCredsCollection.EncryptedCred encryptedCred = new UserCredsCollection.EncryptedCred();
+
                     credList.setEmail(userCredsRequest.getEmail());
                     credList.setPassword(userCredsRequest.getPassword());
                     credList.setUsername(userCredsRequest.getUsername());
                     credList.setService(userCredsRequest.getService());
                     credList.setUrl(userCredsRequest.getUrl());
-                    credListsArray.add(credList);
+                    String encryptedValue = EncryptDecryptService.encryptText(credList, userCredsCollection.getUserName());
+                    encryptedCred.setValue(encryptedValue);
+                    encryptedCredLists.add(encryptedCred);
                     userCredsCollection.setCredLists(credListsArray);
+                    userCredsCollection.setEncryptedCredLists(encryptedCredLists);
 
                     dataSaved = mongoService.saveUser(userCredsCollection);
+                    credListsArray.add(credList);
+                    userCredsCollection.setCredLists(credListsArray);
                 } else {
+                    List<UserCredsCollection.CredList> credLists = new ArrayList<>(encryptedCredList.stream()
+                            .map(encryptedCred -> {
+                                try {
+                                    // Decrypt the encrypted value using the username as the key
+                                    String decryptedJson = EncryptDecryptService.decryptText(encryptedCred.getValue(), userCredsCollection.getUserName());
+
+                                    // Convert JSON string back into a CredList object
+                                    return EncryptDecryptService.parseJson(decryptedJson, UserCredsCollection.CredList.class);
+                                } catch (Exception e) {
+                                    logger.error("Error decrypting credentials", e);
+                                    return null; // Handle errors gracefully
+                                }
+                            })
+                            .filter(Objects::nonNull) // Remove any null results from failed decryptions
+                            .toList());
+
                     List<UserCredsCollection.CredList> filteredCredList = credLists.stream()
                             .filter(f -> f.getService().equalsIgnoreCase(userCredsRequest.getService()))
                             .toList();
+
                     for (UserCredsCollection.CredList credList : filteredCredList) {
                         if (StringUtils.equalsIgnoreCase(credList.getEmail(), userCredsRequest.getEmail())
                                 || StringUtils.equalsIgnoreCase(credList.getUsername(), userCredsRequest.getUsername())) {
@@ -79,14 +101,19 @@ public class HomeManagerImpl implements HomeManager {
                         }
                     }
                     UserCredsCollection.CredList credList = new UserCredsCollection.CredList();
+                    UserCredsCollection.EncryptedCred encryptedCred = new UserCredsCollection.EncryptedCred();
                     credList.setEmail(userCredsRequest.getEmail());
                     credList.setPassword(userCredsRequest.getPassword());
                     credList.setUsername(userCredsRequest.getUsername());
                     credList.setService(userCredsRequest.getService());
                     credList.setUrl(userCredsRequest.getUrl());
-                    userCredsCollection.getCredLists().add(credList);
 
+                    encryptedCred.setValue(EncryptDecryptService.encryptText(credList, userCredsCollection.getUserName()));
+                    userCredsCollection.getEncryptedCredLists().add(encryptedCred);
                     dataSaved = mongoService.saveUser(userCredsCollection);
+
+                    credLists.add(credList);
+                    userCredsCollection.setCredLists(credLists);
 
                 }
 
@@ -128,35 +155,73 @@ public class HomeManagerImpl implements HomeManager {
             UserCredsCollection userCredsCollection = mongoService.getUserDataByIdentifier(userName);
             if (null == userCredsCollection) {
                 return Utility.getBaseResponse(HttpStatus.NO_CONTENT, Utility.getNoContentErrorList());
+            }
 
-            }
-            List<UserCredsCollection.CredList> credList = userCredsCollection.getCredLists();
-            if (CollectionUtils.isEmpty(credList)) {
-                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
-            }
-            List<UserCredsCollection.CredList> filteredCredList = credList.stream()
-                    .filter(f-> Objects.equals(f.getService(), userCredsRequest.getService()))
+            // Decrypt the encrypted credentials
+            List<UserCredsCollection.CredList> credLists = userCredsCollection.getEncryptedCredLists().stream()
+                    .map(encryptedCred -> {
+                        try {
+                            // Decrypt the encrypted value using the username as the key
+                            String decryptedJson = EncryptDecryptService.decryptText(encryptedCred.getValue(), userCredsCollection.getUserName());
+
+                            // Convert JSON string back into a CredList object
+                            return EncryptDecryptService.parseJson(decryptedJson, UserCredsCollection.CredList.class);
+                        } catch (Exception e) {
+                            logger.error("Error decrypting credentials", e);
+                            return null; // Handle errors gracefully
+                        }
+                    })
+                    .filter(Objects::nonNull) // Remove any null results from failed decryptions
                     .toList();
 
+            if (CollectionUtils.isEmpty(credLists)) {
+                return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
+            }
+
+            // Find the CredList to update
+            List<UserCredsCollection.CredList> filteredCredList = credLists.stream()
+                    .filter(f -> Objects.equals(f.getService(), userCredsRequest.getService()))
+                    .toList();
 
             for (UserCredsCollection.CredList cred : filteredCredList) {
                 if (StringUtils.equalsIgnoreCase(cred.getEmail(), userCredsRequest.getEmail())) {
+                    // Update the matching CredList
                     cred.setUsername(userCredsRequest.getUsername());
                     cred.setEmail(userCredsRequest.getEmail());
                     cred.setService(userCredsRequest.getService());
                     cred.setPassword(userCredsRequest.getPassword());
                     cred.setUrl(userCredsRequest.getUrl());
+
+                    // Re-encrypt the updated CredList and replace the old encrypted value
+                    String encryptedValue = EncryptDecryptService.encryptText(cred, userCredsCollection.getUserName()); // Encrypt the updated JSON
+
+                    // Find and update the corresponding encryptedCred in encryptedCredLists
+                    userCredsCollection.getEncryptedCredLists().forEach(encryptedCred -> {
+                        try {
+                            // Decrypt to check if this encrypted entry matches the one being updated
+                            String decryptedJson = EncryptDecryptService.decryptText(encryptedCred.getValue(), userCredsCollection.getUserName());
+                            UserCredsCollection.CredList decryptedCred = EncryptDecryptService.parseJson(decryptedJson, UserCredsCollection.CredList.class);
+
+                            // If the service and email match, update this entry with the new encrypted value
+                            if (decryptedCred != null && StringUtils.equalsIgnoreCase(decryptedCred.getEmail(), userCredsRequest.getEmail())
+                                    && StringUtils.equalsIgnoreCase(decryptedCred.getService(), userCredsRequest.getService())) {
+                                encryptedCred.setValue(encryptedValue); // Set the updated encrypted value
+                            }
+                        } catch (Exception e) {
+                            logger.error("Error updating encrypted credential", e);
+                        }
+                    });
                     break; // Exit loop after updating the first match
                 }
             }
 
+            // Save the updated UserCredsCollection
             if (mongoService.saveUser(userCredsCollection)) {
+                userCredsCollection.setCredLists(credLists); // Set the updated credLists
                 return Utility.getBaseResponse(HttpStatus.OK, userCredsCollection);
             } else {
                 return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Utility.getInterServerErrorList("Something went wrong, Please contact Administrator."));
-
             }
-
 
         } catch (Exception e) {
             logger.error("Exception occurred while updating user creds with probable cause - ", e);
@@ -181,16 +246,52 @@ public class HomeManagerImpl implements HomeManager {
 
             }
 
-            List<UserCredsCollection.CredList> credList = userCredsCollection.getCredLists();
-            if (CollectionUtils.isEmpty(credList)) {
+            List<UserCredsCollection.CredList> credLists = new ArrayList<>(userCredsCollection.getEncryptedCredLists().stream()
+                    .map(encryptedCred -> {
+                        try {
+                            // Decrypt the encrypted value using the username as the key
+                            String decryptedJson = EncryptDecryptService.decryptText(encryptedCred.getValue(), userCredsCollection.getUserName());
+
+                            // Convert JSON string back into a CredList object
+                            return EncryptDecryptService.parseJson(decryptedJson, UserCredsCollection.CredList.class);
+                        } catch (Exception e) {
+                            logger.error("Error decrypting credentials", e);
+                            return null; // Handle errors gracefully
+                        }
+                    })
+                    .filter(Objects::nonNull) // Remove any null results from failed decryptions
+                    .toList());
+
+            if (CollectionUtils.isEmpty(credLists)) {
                 return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, Utility.getBadRequestErrorList("Request is invalid."));
             }
-            boolean removed = credList.removeIf(f -> (null != f.getService()
+            boolean removed = credLists.removeIf(f -> (null != f.getService()
                     && StringUtils.equalsIgnoreCase(f.getService(), userCredsRequest.getService())
                     && StringUtils.equalsIgnoreCase(f.getEmail(), userCredsRequest.getEmail())));
             logger.debug("Removed success");
 
+            // If credentials were removed, also remove from encryptedCredLists
+            if (removed) {
+                // Find and remove corresponding encrypted credentials from encryptedCredLists
+                userCredsCollection.getEncryptedCredLists().removeIf(encryptedCred -> {
+                    try {
+                        // Decrypt the value to find the matching service and email
+                        String decryptedJson = EncryptDecryptService.decryptText(encryptedCred.getValue(), userCredsCollection.getUserName());
+                        UserCredsCollection.CredList decryptedCred = EncryptDecryptService.parseJson(decryptedJson, UserCredsCollection.CredList.class);
+
+                        // Check if the decrypted data matches the request
+                        return decryptedCred != null && StringUtils.equalsIgnoreCase(decryptedCred.getService(), userCredsRequest.getService())
+                                && StringUtils.equalsIgnoreCase(decryptedCred.getEmail(), userCredsRequest.getEmail());
+                    } catch (Exception e) {
+                        logger.error("Error decrypting encrypted credentials for removal", e);
+                        return false; // Do not remove on decryption error
+                    }
+                });
+                logger.debug("Removed encrypted credential successfully");
+            }
+
             if (mongoService.saveUser(userCredsCollection)) {
+                userCredsCollection.setCredLists(credLists);
                 return Utility.getBaseResponse(HttpStatus.OK, userCredsCollection);
             } else {
                 return Utility.getBaseResponse(HttpStatus.INTERNAL_SERVER_ERROR, Utility.getInterServerErrorList("Something went wrong, Please contact Administrator."));
@@ -242,6 +343,24 @@ public class HomeManagerImpl implements HomeManager {
                         .build());
                 return Utility.getBaseResponse(HttpStatus.BAD_REQUEST, errors);
             }
+            List<UserCredsCollection.CredList> credLists = new ArrayList<>(userCredsCollection.getEncryptedCredLists().stream()
+                    .map(encryptedCred -> {
+                        try {
+                            // Decrypt the encrypted value using the username as the key
+                            String decryptedJson = EncryptDecryptService.decryptText(encryptedCred.getValue(), userCredsCollection.getUserName());
+
+                            // Convert JSON string back into a CredList object
+                            return EncryptDecryptService.parseJson(decryptedJson, UserCredsCollection.CredList.class);
+                        } catch (Exception e) {
+                            logger.error("Error decrypting credentials", e);
+                            return null; // Handle errors gracefully
+                        }
+                    })
+                    .filter(Objects::nonNull) // Remove any null results from failed decryptions
+                    .toList());
+
+            userCredsCollection.setCredLists(credLists);
+
             baseResponse = Utility.getBaseResponse(HttpStatus.OK, userCredsCollection);
 
         } catch (Exception e) {

@@ -24,6 +24,9 @@ public class UserCredsCollection {
     @JsonProperty("aCredsList")
     List<CredList> credLists;
 
+    @JsonProperty("aEncryptedCredList")
+    private List<EncryptedCred> encryptedCredLists;
+
     @JsonProperty("dtLastUpdatedDate")
     private Date lastUpdatedDate;
 
@@ -48,6 +51,15 @@ public class UserCredsCollection {
 
         @JsonProperty("sUrl")
         private String url;
+
+    }
+
+    @ToString
+    @Data
+    public static class EncryptedCred {
+
+        @JsonProperty("sValue")
+        private String value;
 
     }
 }
