@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 
+import java.util.Map;
 import java.util.Properties;
 
 @Configuration
@@ -20,14 +21,16 @@ public class DatabaseConfig {
     //  Mongo DB connection
     private static String mongoUri = "";
     public static final String MONGO_URI = "MONGO_URI";
-    private static final String PASS_MANAGER_PROPERTIES_PATH = "/opt/configs/passmanager.properties";
 
     static {
-        Properties properties = Utility.fetchProperties(PASS_MANAGER_PROPERTIES_PATH);
-        if (null != properties) {
-            mongoUri = properties.getProperty(MONGO_URI);
+        try {
+            Map config = InfisicalConfig.fetchConfig("PasswordManager");
+            mongoUri = null != config ? (String) config.get(MONGO_URI) : null;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
+
 
     @Bean
     public MongoDatabaseFactory mongoDbFactory() {
